@@ -33,49 +33,45 @@ std::vector<std::string> get_args(argparse::ArgumentParser &parser,
   return args;
 }
 
-int run_brctl(argparse::ArgumentParser &parser) {
-  Brctl brctl{};
-  auto err = brctl.init();
-  if (err != 0) {
-    std::cerr << "Got an error when initializing the socket.\n";
-    return err;
-  }
+void run_brctl(argparse::ArgumentParser &parser) {
   if (parser.exists(kw::SHOW)) {
-    return brctl.show();
+    Brctl::show();
   }
+  Brctl brctl{};
+  brctl.init();
 
   do {
     if (parser.exists(kw::ADD)) {
       auto args = get_args(parser, kw::ADD, kw::ONE);
-      if (args.empty()) {
-        break;
+      if (!args.empty()) {
+        brctl.add(args[0]);
       }
-      return brctl.add(args[0]);
+      break;
     }
     if (parser.exists(kw::ADDIF)) {
       auto args = get_args(parser, kw::ADDIF, kw::TWO);
       if (args.empty()) {
-        break;
+        brctl.addif(args[0], args[1]);
       }
-      return brctl.addif(args[0], args[1]);
+      break;
     }
     if (parser.exists(kw::DEL)) {
       auto args = get_args(parser, kw::DEL, kw::ONE);
       if (args.empty()) {
-        break;
+        brctl.del(args[0]);
       }
-      return brctl.del(args[0]);
+      break;
     }
     if (parser.exists(kw::DELIF)) {
       auto args = get_args(parser, kw::DELIF, kw::TWO);
       if (args.empty()) {
-        break;
+        brctl.delif(args[0], args[1]);
       }
-      brctl.delif(args[0], args[1]);
+      break;
     }
   } while (false);
+
   parser.print_help();
-  return 0;
 }
 
 int main(int argc, const char *argv[]) {
@@ -84,8 +80,19 @@ int main(int argc, const char *argv[]) {
   auto err = parser.parse(argc, argv);
   if (err) {
     std::cout << err << std::endl;
-    return -1;
+    return 1;
   }
-
-  return run_brctl(parser);
+  try {
+    run_brctl(parser);
+  } catch (const std::filesystem::filesystem_error& err) {
+    std::cerr << err.what() << std::endl;
+    return 1;
+  } catch (const std::runtime_error& err) {
+    std::cerr << err.what() << std::endl;
+    return 1;
+  } catch (...) {
+    std::cerr << "Unknown error!" << std::endl;
+    return 1;
+  }
+  return 0;
 }

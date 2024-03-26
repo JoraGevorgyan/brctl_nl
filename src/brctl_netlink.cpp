@@ -117,7 +117,7 @@ ssize_t BrctlNetlink::send_msg_(const struct nlmsghdr *nlh) const {
   iov.iov_len = nlh->nlmsg_len;
 
   auto msg = get_msg_to_send_(&iov);
-  auto len = sendmsg(socket_fd_, &msg, 0);
+  auto len = sendmsg(socket_fd_, &msg, MSG_CONFIRM);
   if (len == -1 || len != nlh->nlmsg_len) {
     return errno;
   }
@@ -131,7 +131,7 @@ ssize_t BrctlNetlink::receive_msg_(char *buffer) const {
 
   auto msg = get_msg_to_receive_(&iov);
 
-  auto len = recvmsg(socket_fd_, &msg, 0);
+  auto len = recvmsg(socket_fd_, &msg, MSG_WAITALL);
   if (len == -1) {
     return errno;
   }

@@ -11,9 +11,10 @@ constexpr auto ADDIF = "addif";
 constexpr auto DEL = "del";
 constexpr auto DELIF = "delif";
 
-/// constant numbers used when parsing arguments
-constexpr std::size_t ONE = 1;
-constexpr std::size_t TWO = 2;
+/// constant numbers
+constexpr auto ONE = 1;
+constexpr auto TWO = 2;
+constexpr auto BUF_SIZE = 4096;
 
 /// hardcoded paths
 constexpr auto BRIDGES_DIR = "/sys/class/net/";

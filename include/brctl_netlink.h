@@ -30,7 +30,7 @@ private:
   int add_bridge_(const std::string &br_name) const;
 
   int send_msg_(const struct nlmsghdr *nlh) const;
-  int receive_msg_(char *buffer);
+  ssize_t receive_msg_(char *buffer);
   static struct msghdr get_msg_to_send_(struct iovec *iov);
   static struct msghdr get_msg_to_receive_(struct iovec *iov);
   static struct sockaddr_nl get_dest_for_msg_();

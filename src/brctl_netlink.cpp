@@ -19,7 +19,11 @@ int BrctlNetlink::send_msg_(const struct nlmsghdr *nlh) const {
   iov.iov_len = nlh->nlmsg_len;
 
   auto msg = get_msg_to_send_(&iov);
-  return sendmsg(socket_fd_, &msg, 0);
+  auto len = sendmsg(socket_fd_, &msg, 0);
+  if (len == -1 || len != nlh->nlmsg_len) {
+    return errno;
+  }
+  return 0;
 }
 
 struct msghdr BrctlNetlink::get_msg_to_send_(struct iovec *iov) {
@@ -45,14 +49,18 @@ struct sockaddr_nl BrctlNetlink::get_dest_for_msg_() {
   return dest_addr;
 }
 
-int BrctlNetlink::receive_msg_(char *buffer) {
+ssize_t BrctlNetlink::receive_msg_(char *buffer) {
   struct iovec iov;
   iov.iov_base = buffer;
   iov.iov_len = kw::BUF_SIZE;
 
   auto msg = get_msg_to_receive_(&iov);
 
-  return recvmsg(socket_fd_, &msg, 0);
+  auto len = recvmsg(socket_fd_, &msg, 0);
+  if (len == -1) {
+    return errno;
+  }
+  return len;
 }
 
 struct msghdr BrctlNetlink::get_msg_to_receive_(struct iovec *iov) {

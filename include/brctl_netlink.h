@@ -29,12 +29,12 @@ private:
   static void show_bridge_(const fs::directory_entry &dir_entry);
   int add_bridge_(const std::string &br_name) const;
 
-  int send_msg_(struct nlmsghdr *nlh) const;
-  static struct msghdr get_msg_to_send_(struct iovec* iov);
-  static struct msghdr get_msg_to_receive_(struct iovec* iov);
-  static struct sockaddr_nl get_dest_for_msg_();
-
+  int send_msg_(const struct nlmsghdr *nlh) const;
   int receive_msg_(char *buffer);
+  static struct msghdr get_msg_to_send_(struct iovec *iov);
+  static struct msghdr get_msg_to_receive_(struct iovec *iov);
+  static struct sockaddr_nl get_dest_for_msg_();
+  static struct nlmsghdr *init_nlmsghdr_();
 
   static inline __attribute__((always_inline)) std::string to_str_(int err) {
     return std::move(std::string(strerror(err)));

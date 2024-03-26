@@ -13,7 +13,7 @@ void BrctlNetlink::init() {
   }
 }
 
-int BrctlNetlink::send_msg_(struct nlmsghdr *nlh) const {
+int BrctlNetlink::send_msg_(const struct nlmsghdr *nlh) const {
   struct iovec iov;
   iov.iov_base = (void *)nlh;
   iov.iov_len = nlh->nlmsg_len;
@@ -22,7 +22,7 @@ int BrctlNetlink::send_msg_(struct nlmsghdr *nlh) const {
   return sendmsg(socket_fd_, &msg, 0);
 }
 
-struct msghdr BrctlNetlink::get_msg_to_send_(struct iovec* iov) {
+struct msghdr BrctlNetlink::get_msg_to_send_(struct iovec *iov) {
   auto dest_addr = get_dest_for_msg_();
 
   struct msghdr msg;
@@ -55,7 +55,7 @@ int BrctlNetlink::receive_msg_(char *buffer) {
   return recvmsg(socket_fd_, &msg, 0);
 }
 
-struct msghdr BrctlNetlink::get_msg_to_receive_(struct iovec* iov) {
+struct msghdr BrctlNetlink::get_msg_to_receive_(struct iovec *iov) {
   struct sockaddr_nl src_addr;
 
   struct msghdr msg;
@@ -98,7 +98,36 @@ void BrctlNetlink::add(const std::string &br_name) const {
 }
 
 int BrctlNetlink::add_bridge_(const std::string &br_name) const {
-  
+  auto *nlh = init_nlmsghdr_();
+
+  struct ifinfomsg *ifinfo = (struct ifinfomsg *)NLMSG_DATA(nlh);
+  ifinfo->ifi_family = AF_BRIDGE;
+  ifinfo->ifi_index = 0;
+  ifinfo->ifi_change = 0;
+
+  struct rtattr *rta =
+      (struct rtattr *)(((char *)nlh) + NLMSG_ALIGN(sizeof(struct ifinfomsg)));
+  rta->rta_type = IFLA_IFNAME;
+  rta->rta_len = RTA_LENGTH(br_name.size() + 1);
+  memcpy(RTA_DATA(rta), br_name.c_str(), br_name.size() + 1);
+  nlh->nlmsg_len += RTA_ALIGN(rta->rta_len);
+
+  auto err = send_msg_(nlh);
+  free(nlh);
+  return err;
+}
+
+struct nlmsghdr *BrctlNetlink::init_nlmsghdr_() {
+  const auto mem_size = NLMSG_SPACE(sizeof(struct ifinfomsg));
+  struct nlmsghdr *nlh = (struct nlmsghdr *)malloc(mem_size);
+  memset(nlh, 0, mem_size);
+
+  nlh->nlmsg_len = mem_size;
+  nlh->nlmsg_pid = getpid();
+  nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
+  nlh->nlmsg_type = RTM_NEWLINK;
+
+  return nlh;
 }
 
 void BrctlNetlink::addif(const std::string &br_name,

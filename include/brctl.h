@@ -16,7 +16,7 @@ public:
   virtual void del(const std::string &br_name) const = 0;
   virtual void delif(const std::string &br_name,
                      const std::string &iface_name) const = 0;
-  virtual ~Brctl() = 0;
+  virtual ~Brctl() = default;
 };
 
 #endif // BRCTL_H

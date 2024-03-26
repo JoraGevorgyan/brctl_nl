@@ -1,28 +1,22 @@
 #ifndef BRCTL_H
 #define BRCTL_H
 
-#include <iostream>
-#include <filesystem>
-
-namespace fs = std::filesystem;
+#include <string>
 
 class Brctl {
-private:
+protected:
   int socket_fd_;
 
 public:
-  explicit Brctl() = default;
-  void init();
-  static void show();
-  void add(const std::string& br_name) const;
-  void addif(const std::string& br_name, const std::string& iface_name) const;
-  void del(const std::string& br_name) const;
-  void delif(const std::string& br_name, const std::string& iface_name) const;
-  ~Brctl() noexcept;
-
-private:
-  static bool is_bridge(const fs::directory_entry& dir_entry);
-  static void show_bridge(const fs::directory_entry& dir_entry);
+  explicit Brctl(): socket_fd_(-1) {}
+  virtual void show() const = 0;
+  virtual void add(const std::string &br_name) const = 0;
+  virtual void addif(const std::string &br_name,
+                     const std::string &iface_name) const = 0;
+  virtual void del(const std::string &br_name) const = 0;
+  virtual void delif(const std::string &br_name,
+                     const std::string &iface_name) const = 0;
+  virtual ~Brctl() = 0;
 };
 
 #endif // BRCTL_H

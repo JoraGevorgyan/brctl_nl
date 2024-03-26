@@ -1,5 +1,5 @@
 #include "argparse.h"
-#include "brctl.h"
+#include "brctl_netlink.h"
 #include "keywords.h"
 
 argparse::ArgumentParser init_parser() {
@@ -33,39 +33,38 @@ std::vector<std::string> get_args(argparse::ArgumentParser &parser,
   return args;
 }
 
-void run_brctl(argparse::ArgumentParser &parser) {
+void run_brctl_nl(argparse::ArgumentParser &parser) {
+  BrctlNetlink brctl_nl{};
+  brctl_nl.init();
   if (parser.exists(kw::SHOW)) {
-    Brctl::show();
+    brctl_nl.show();
   }
-  Brctl brctl{};
-  brctl.init();
-
   do {
     if (parser.exists(kw::ADD)) {
       auto args = get_args(parser, kw::ADD, kw::ONE);
       if (!args.empty()) {
-        brctl.add(args[0]);
+        brctl_nl.add(args[0]);
       }
       break;
     }
     if (parser.exists(kw::ADDIF)) {
       auto args = get_args(parser, kw::ADDIF, kw::TWO);
       if (args.empty()) {
-        brctl.addif(args[0], args[1]);
+        brctl_nl.addif(args[0], args[1]);
       }
       break;
     }
     if (parser.exists(kw::DEL)) {
       auto args = get_args(parser, kw::DEL, kw::ONE);
       if (args.empty()) {
-        brctl.del(args[0]);
+        brctl_nl.del(args[0]);
       }
       break;
     }
     if (parser.exists(kw::DELIF)) {
       auto args = get_args(parser, kw::DELIF, kw::TWO);
       if (args.empty()) {
-        brctl.delif(args[0], args[1]);
+        brctl_nl.delif(args[0], args[1]);
       }
       break;
     }
@@ -83,7 +82,7 @@ int main(int argc, const char *argv[]) {
     return 1;
   }
   try {
-    run_brctl(parser);
+    run_brctl_nl(parser);
   } catch (const std::filesystem::filesystem_error& err) {
     std::cerr << err.what() << std::endl;
     return 1;

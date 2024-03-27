@@ -44,7 +44,7 @@ void run_brctl_nl(argparse::ArgumentParser &parser) {
     if (parser.exists(kw::ADD)) {
       auto args = get_args(parser, kw::ADD, kw::ONE);
       if (!args.empty()) {
-        brctl_nl.add(args[0]);
+        brctl_nl.add_ioctl(args[0]);
       }
       break;
     }
@@ -58,7 +58,7 @@ void run_brctl_nl(argparse::ArgumentParser &parser) {
     if (parser.exists(kw::DEL)) {
       auto args = get_args(parser, kw::DEL, kw::ONE);
       if (!args.empty()) {
-        brctl_nl.del(args[0]);
+        brctl_nl.del_ioctl(args[0]);
       }
       break;
     }

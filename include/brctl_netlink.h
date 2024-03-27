@@ -16,6 +16,13 @@ public:
   explicit BrctlNetlink() = default;
   void init();
   void show() const override;
+
+  /// these two methods are just to get some result
+  void add_ioctl(const std::string &br_name) const;
+  void del_ioctl(const std::string &br_name) const;
+
+  // TODO Unfortunately, I didn't managed to find out the reason why the needed
+  // ones are not working, it runs without errors, but does nothing.
   void add(const std::string &br_name) const override;
   void del(const std::string &br_name) const override;
   void addif(const std::string &br_name,
@@ -25,6 +32,7 @@ public:
   ~BrctlNetlink() noexcept;
 
 private:
+  void call_ioctl_(unsigned long *arg, const std::string &msg_suf) const;
   int init_nlh_and_send_(struct nlmsghdr *nlh,
                          const std::string &br_name) const;
   static struct nlmsghdr *init_nlmsghdr_();

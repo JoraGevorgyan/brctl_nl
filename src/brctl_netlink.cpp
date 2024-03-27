@@ -2,6 +2,9 @@
 #include "keywords.h"
 
 #include <cerrno>
+#include <linux/if.h>
+#include <linux/if_bridge.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -21,6 +24,11 @@ void BrctlNetlink::show() const {
   }
 }
 
+void BrctlNetlink::add_ioctl(const std::string &br_name) const {
+  unsigned long arg[2] = {BRCTL_ADD_BRIDGE, (unsigned long)br_name.c_str()};
+  call_ioctl_(arg, "adding " + br_name);
+}
+
 void BrctlNetlink::add(const std::string &br_name) const {
   auto *nlh = init_nlmsghdr_();
   nlh->nlmsg_type = RTM_NEWLINK;
@@ -29,6 +37,20 @@ void BrctlNetlink::add(const std::string &br_name) const {
   free(nlh);
   const auto sub_msg = "trying to add " + br_name;
   check_response_(err, sub_msg);
+}
+
+void BrctlNetlink::del_ioctl(const std::string &br_name) const {
+  unsigned long arg[2] = {BRCTL_DEL_BRIDGE, (unsigned long)br_name.c_str()};
+  call_ioctl_(arg, "deleting " + br_name);
+}
+
+void BrctlNetlink::call_ioctl_(unsigned long *arg,
+                               const std::string &msg_suf) const {
+  auto ret = ioctl(socket_fd_, SIOCSIFBR, arg);
+  if (ret < 0) {
+    const auto msg = "Got an error(" + to_str_(errno) + ") when " + msg_suf;
+    throw std::runtime_error(msg);
+  }
 }
 
 void BrctlNetlink::del(const std::string &br_name) const {

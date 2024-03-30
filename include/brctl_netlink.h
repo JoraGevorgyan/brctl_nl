@@ -34,7 +34,7 @@ private:
 
   void check_response_(ssize_t err, const std::string &sub_msg) const;
   ssize_t send_msg_(const struct nlmsghdr *nlh) const;
-  ssize_t receive_msg_(char *buffer) const;
+  void receive_msg_(char *buffer, const std::string &msg_suffix) const;
 
   static struct msghdr get_msg_to_send_(struct iovec *iov);
   static struct msghdr get_msg_to_receive_(struct iovec *iov);

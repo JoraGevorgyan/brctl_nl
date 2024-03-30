@@ -8,8 +8,8 @@
 void BrctlNetlink::init() {
   socket_fd_ = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
   if (socket_fd_ < 0) {
-    const auto msg = "error(" + to_str_(errno) + ") when creating the socket.";
-    throw std::runtime_error(msg);
+    throw std::runtime_error("error(" + to_str_(errno) +
+                             ") when creating the socket.");
   }
 }
 
@@ -94,21 +94,14 @@ void BrctlNetlink::check_response_(ssize_t err,
                                    const std::string &sub_msg) const {
   const auto msg_suffix = ") when " + sub_msg;
   if (err != 0) {
-    const auto msg =
-        "After sending response got an error(" + to_str_(err) + msg_suffix;
-    throw std::runtime_error(msg);
+    throw std::runtime_error("After sending response got an error(" +
+                             to_str_(err) + msg_suffix);
   }
 
   char buffer[kw::BUF_SIZE];
   memset(buffer, '\0', kw::BUF_SIZE);
 
-  err = receive_msg_(buffer);
-  if (err != 0) {
-    const auto msg = "When trying to receive response got an error(" +
-                     to_str_(err) + msg_suffix;
-    throw std::runtime_error(msg);
-  }
-  // TODO parse the response(buffer)
+  receive_msg_(buffer, msg_suffix);
 }
 
 ssize_t BrctlNetlink::send_msg_(const struct nlmsghdr *nlh) const {
@@ -124,18 +117,35 @@ ssize_t BrctlNetlink::send_msg_(const struct nlmsghdr *nlh) const {
   return 0;
 }
 
-ssize_t BrctlNetlink::receive_msg_(char *buffer) const {
+void BrctlNetlink::receive_msg_(char *buffer,
+                                const std::string &msg_suffix) const {
   struct iovec iov;
   iov.iov_base = buffer;
   iov.iov_len = kw::BUF_SIZE;
 
   auto msg = get_msg_to_receive_(&iov);
 
-  auto len = recvmsg(socket_fd_, &msg, MSG_WAITALL);
-  if (len == -1) {
-    return errno;
+  auto status = recvmsg(socket_fd_, &msg, MSG_WAITALL);
+  if (status == -1) {
+    throw std::runtime_error("When trying to receive response got an error(" +
+                             to_str_(errno) + msg_suffix);
   }
-  return 0;
+
+  for (struct nlmsghdr *nlh = reinterpret_cast<struct nlmsghdr *>(buffer);
+       NLMSG_OK(nlh, status); nlh = NLMSG_NEXT(nlh, status)) {
+    if (nlh->nlmsg_type == NLMSG_ERROR) {
+      struct nlmsgerr *nlmsg_err =
+          reinterpret_cast<struct nlmsgerr *>(NLMSG_DATA(nlh));
+      if (nlmsg_err->error) {
+        throw std::runtime_error("Got an error(" + to_str_(nlmsg_err->error) +
+                                 msg_suffix);
+      }
+    } else if (nlh->nlmsg_type == RTM_NEWLINK) {
+      std::cout << "Successfully created bridge" << std::endl;
+    } else if (nlh->nlmsg_type == RTM_DELACTION) {
+      std::cout << "Successfully deleted" << std::endl;
+    }
+  }
 }
 
 struct msghdr BrctlNetlink::get_msg_to_send_(struct iovec *iov) {

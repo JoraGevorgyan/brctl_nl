@@ -14,7 +14,7 @@ constexpr auto DELIF = "delif";
 /// constant numbers
 constexpr auto ONE = 1;
 constexpr auto TWO = 2;
-constexpr auto BUF_SIZE = 4096;
+constexpr auto BUF_SIZE = 8192;
 
 /// hardcoded paths
 constexpr auto BRIDGES_DIR = "/sys/class/net/";
